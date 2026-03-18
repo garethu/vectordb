@@ -5,7 +5,7 @@ Spring Boot 3.2 (Java 21) demo that ingests product rows from PostgreSQL into a 
 ## Prerequisites
 - Java 21
 - Maven (or the included `mvnw` / `mvnw.cmd` wrappers)
-- Docker + Docker Compose (for pgvector)
+- Docker + Docker Compose (for pgvector) or Podman
 - Python 3 with `psycopg2` (`pip install psycopg2-binary` works for local testing)
 - Ollama running locally with the embedding model `rjmalagon/gte-qwen2-1.5b-instruct-embed-f16:latest` pulled (`ollama pull rjmalagon/gte-qwen2-1.5b-instruct-embed-f16:latest`)
 - Free ports: 5432 (Postgres) and 11434 (Ollama default)
@@ -17,7 +17,12 @@ docker compose up -d pgvector
 
 # 2) (Optional) Initialize schema
 # Replace <pgcontainer> with the running container name, e.g., yootiful-vectordbs-pgvector-1
-docker exec -i <pgcontainer> psql -U admin -d clothing_store < data/database.sql
+
+# Linux
+docker exec -i  <pgcontainer> psql -U admin -d clothing_store < data/database.sql
+
+# Windows
+Get-Content data/database.sql | docker exec -i <pgcontainer> psql -U admin -d clothing_store
 
 # 3) Load sample data into the product table
 pip install psycopg2-binary
@@ -31,7 +36,9 @@ java -jar target/yootiful-vectordbs-0.0.1-SNAPSHOT.jar
 ```
 
 ## Configure the application
-Align the datasource with the compose DB (name `clothing_store`, user `admin`, password `admin`). Either edit `src/main/resources/application.properties` or set env vars. Example env override:
+Align the datasource with the compose DB (name `clothing_store`, user `admin`, password `admin`). Either edit `src/main/resources/application.properties` or set env vars. 
+
+Example env override:
 ```bash
 set SPRING_DATASOURCE_URL=jdbc:postgresql://localhost/clothing_store
 set SPRING_DATASOURCE_USERNAME=admin
@@ -51,7 +58,12 @@ The compose file provisions `clothing_store` with user `admin` and password `adm
 2) Create tables (if not using the optional Spring init flags)
 ```bash
 # Use the running container name from `docker ps`
+
+# Linux
 docker exec -i <pgcontainer> psql -U admin -d clothing_store < data/database.sql
+
+# Windows
+Get-Content data/database.sql | docker exec -i yootiful-vectordbs-pgvector-1 psql -U admin -d clothing_store
 ```
 
 3) Load sample products

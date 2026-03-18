@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS vector_store (
 	embedding vector(1536)
 );
 
-// To improve the search's performance, we can try to calculate the distance for only a subset of the vectors.
-// Hierarchical Navigable Small Worlds (HNSW)
+-- To improve the search's performance, we can try to calculate the distance for only a subset of the vectors.
+-- Hierarchical Navigable Small Worlds (HNSW)
 CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
 

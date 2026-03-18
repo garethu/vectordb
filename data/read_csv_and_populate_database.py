@@ -3,8 +3,8 @@ import psycopg2
 
 # Database connection details
 DB_NAME = 'clothing_store'
-DB_USER = 'myuser'
-DB_PASSWORD = 'secret'
+DB_USER = 'admin'
+DB_PASSWORD = 'admin'
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 

@@ -5,7 +5,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,6 +16,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootApplication
 public class YootifulVectordbsApplication {
@@ -45,6 +46,29 @@ public class YootifulVectordbsApplication {
                         .query(new DataClassRowMapper<>(Product.class))
                         .list();
 
+                int total = products.size();
+                AtomicInteger counter = new AtomicInteger(0);
+                AtomicBoolean spinning = new AtomicBoolean(true);
+
+                Thread spinnerThread = new Thread(() -> {
+                    String[] frames = { "|", "/", "-", "\\" };
+                    int i = 0;
+                    while (spinning.get()) {
+                        System.out.print(String.format("\r  %s  Ingesting... [%d / %d]  ",
+                                frames[i++ % frames.length], counter.get(), total));
+                        System.out.flush();
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                    System.out.printf("\r  Done! Ingested %d vectors.%s%n", total, " ".repeat(20));
+                });
+                spinnerThread.setDaemon(true);
+                spinnerThread.start();
+
                 for (var p : products) {
                     var document = new Document(p.description(),
                             Map.of("id", p.id(),
@@ -54,6 +78,14 @@ public class YootifulVectordbsApplication {
 
                     var split = tokenTextSplitter.apply(List.of(document));
                     vectorStore.add(split);
+                    counter.incrementAndGet();
+                }
+
+                spinning.set(false);
+                try {
+                    spinnerThread.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
 
                 Instant end = Instant.now();
